@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>سامانه نمره‌دهی - دبیر و دانش‌آموز</title>
+  <style>
+    :root{
+      --blue: #1e88e5; /* آبی ملایم */
+      --white: #ffffff;
+      --soft-yellow: #fff8e1; /* زرد ملایم */
+      --muted: #6b7280;
+      --card-radius: 14px;
+      --glass: rgba(255,255,255,0.6);
+      --shadow: 0 8px 20px rgba(30,30,60,0.08);
+      font-family: 'Tahoma','Vazir', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background: linear-gradient(180deg,var(--soft-yellow) 0%, #f2fbff 60%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      direction:rtl;
+    }
+
+    .app{
+      width:100%;
+      max-width:1000px;
+      background:var(--white);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      min-height:560px;
+    }
+
+    .sidebar{
+      background:linear-gradient(180deg,var(--blue), #3aa0ff);
+      color:var(--white);
+      padding:24px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .logo{
+      font-weight:700;
+      font-size:20px;
+    }
+    .subtitle{opacity:0.95; font-size:13px}
+
+    .tabs{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+    .tab-btn{
+      background:transparent;border:0;color:inherit;padding:10px 12px;text-align:right;border-radius:10px;cursor:pointer;font-size:15px
+    }
+    .tab-btn.active{background:rgba(255,255,255,0.12)}
+
+    .content{padding:22px}
+
+    .card{background:var(--white);border-radius:12px;padding:14px;box-shadow:0 6px 14px rgba(20,40,80,0.04);margin-bottom:14px}
+
+    label{display:block;margin-bottom:6px;color:var(--muted);font-size:13px}
+    input[type=text], input[type=number], textarea, input[type=password]{
+      width:100%;padding:10px;border-radius:10px;border:1px solid #e6eef9;font-size:14px;box-sizing:border-box
+    }
+    textarea{min-height:90px;resize:vertical}
+    .row{display:flex;gap:10px}
+    .row .col{flex:1}
+
+    .btn{
+      display:inline-block;padding:10px 14px;border-radius:10px;border:0;background:var(--blue);color:var(--white);cursor:pointer;font-weight:600
+    }
+    .btn.ghost{background:transparent;color:var(--blue);border:1px solid rgba(30,88,165,0.12)}
+
+    .list{max-height:300px;overflow:auto}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:8px 6px;border-bottom:1px solid #f0f4fb;text-align:right}
+    th{color:var(--muted);font-weight:600}
+
+    .hint{font-size:13px;color:var(--muted)}
+
+    .small{font-size:12px;color:#8b98ab}
+
+    /* responsive */
+    @media(max-width:880px){
+      .app{grid-template-columns:1fr;}
+      .sidebar{flex-direction:row;align-items:center;justify-content:space-between;padding:14px}
+    }
+
+  </style>
+</head>
+<body>
+  <div class="app" role="application">
+    <aside class="sidebar">
+      <div>
+        <div class="logo">سامانه نمره‌دهی</div>
+        <div class="subtitle">دسترسی دبیر و نمایش برای دانش‌آموز</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-teacher">دبیر (ثبت نمره)</button>
+        <button class="tab-btn" id="tab-student">دانش‌آموز (مشاهده)</button>
+        <div style="height:8px"></div>
+        <div class="hint">رنگ‌بندی: آبی / سفید / زرد ملایم — طراحی نوین و ریسپانسیو</div>
+      </div>
+
+      <div style="margin-top:auto; font-size:12px; opacity:0.95">
+        <div class="small">تذکر: داده‌ها در این نسخه فقط در مرورگر شما ذخیره می‌شوند (localStorage).</div>
+      </div>
+    </aside>
+
+    <main class="content">
+
+      <!-- TEACHER VIEW -->
+      <section id="teacher-view">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:700">ورود دبیر</div>
+              <div class="small">برای ویرایش/ثبت نمره نیاز به رمز دارید</div>
+            </div>
+            <div>
+              <input id="teacher-password" type="password" placeholder="رمز دبیر" style="width:160px" />
+              <button class="btn" id="btn-login">ورود</button>
+              <button class="btn ghost" id="btn-logout" style="display:none">خروج</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="teacher-panel" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-weight:700">ثبت نمره جدید</div>
+            <div class="small">فرم را پر کنید و ثبت را بزنید</div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label>کد ملی دانش‌آموز</label>
+              <input id="input-nid" type="text" placeholder="۱۰ رقم (مثال: 0012345678)" />
+            </div>
+            <div class="col">
+              <label>نام و نام‌خانوادگی</label>
+              <input id="input-name" type="text" placeholder="نام و نام‌خانوادگی" />
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <div class="col">
+              <label>نمره</label>
+              <input id="input-score" type="number" min="0" max="20" placeholder="مثال: 17" />
+            </div>
+            <div class="col">
+              <label>نظر دبیر</label>
+              <textarea id="input-comment" placeholder="نظر درباره‌ی درس یا توصیه"></textarea>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn" id="btn-save">ثبت</button>
+            <button class="btn ghost" id="btn-clear">پاک کردن فرم</button>
+          </div>
+        </div>
+
+        <div class="card" id="teacher-list-card" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:700">لیست دانش‌آموزان ثبت‌شده</div>
+            <div class="small">برای ویرایش روی سطر کلیک کنید</div>
+          </div>
+
+          <div class="list">
+            <table id="grade-table">
+              <thead>
+                <tr><th>کد ملی</th><th>نام</th><th>نمره</th><th>نظر</th><th>عملیات</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENT VIEW -->
+      <section id="student-view" style="display:none">
+        <div class="card">
+          <div style="font-weight:700">مشاهده وضعیت درسی</div>
+          <div class="small" style="margin-bottom:10px">با وارد کردن کد ملی خود می‌توانید نمره و نظر دبیر را ببینید.</div>
+
+          <label>کد ملی</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="student-nid" type="text" placeholder="کد ملی ۱۰ رقمی" />
+            <button class="btn" id="btn-check">مشاهده</button>
+            <button class="btn ghost" id="btn-clear-student">پاک</button>
+          </div>
+        </div>
+
+        <div class="card" id="student-result" style="display:none">
+          <div style="font-weight:700" id="res-name"></div>
+          <div style="margin-top:6px">کد ملی: <span id="res-nid"></span></div>
+          <div style="margin-top:6px">نمره: <strong id="res-score"></strong></div>
+          <div style="margin-top:6px">نظر دبیر:</div>
+          <div style="margin-top:6px;padding:10px;border-radius:8px;background:var(--soft-yellow)
+                      ;border:1px solid #f4e9b8" id="res-comment"></div>
+        </div>
+
+        <div class="card" id="student-none" style="display:none">
+          <div class="small">فعلاً موردی با این کد ملی ثبت نشده است.</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // ---------- simple storage helper ----------
+    const STORAGE_KEY = 'grade_records_v1';
+
+    function loadRecords(){
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch(e){
+        console.error(e); return [];
+      }
+    }
+    function saveRecords(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+    // ---------- iranian national code validation (10 digits with checksum) ----------
+    function validateIranNationalCode(code){
+      if(!/^[0-9]{10}$/.test(code)) return false;
+      const digits = code.split('').map(d=>+d);
+      const check = digits[9];
+      let sum = 0;
+      for(let i=0;i<9;i++) sum += digits[i] * (10 - i);
+      const rem = sum % 11;
+      if(rem < 2) return check === rem;
+      return check === 11 - rem;
+    }
+
+    // ---------- UI logic ----------
+    const tabTeacher = document.getElementById('tab-teacher');
+    const tabStudent = document.getElementById('tab-student');
+    const teacherView = document.getElementById('teacher-view');
+    const studentView = document.getElementById('student-view');
+
+    function showTeacher(){ tabTeacher.classList.add('active'); tabStudent.classList.remove('active'); teacherView.style.display='block'; studentView.style.display='none'; }
+    function showStudent(){ tabStudent.classList.add('active'); tabTeacher.classList.remove('active'); teacherView.style.display='none'; studentView.style.display='block'; }
+
+    tabTeacher.addEventListener('click', showTeacher);
+    tabStudent.addEventListener('click', showStudent);
+
+    // teacher login (simple, client-side) - change defaultPass if you want
+    const defaultPass = 'teacher123';
+    const btnLogin = document.getElementById('btn-login');
+    const btnLogout = document.getElementById('btn-logout');
+    const teacherPanel = document.getElementById('teacher-panel');
+    const teacherListCard = document.getElementById('teacher-list-card');
+
+    function setLoggedIn(state){
+      if(state){
+        document.getElementById('teacher-password').style.display='none';
+        btnLogin.style.display='none';
+        btnLogout.style.display='inline-block';
+        teacherPanel.style.display='block';
+        teacherListCard.style.display='block';
+        renderTable();
+      } else {
+        document.getElementById('teacher-password').style.display='inline-block';
+        btnLogin.style.display='inline-block';
+        btnLogout.style.display='none';
+        teacherPanel.style.display='none';
+        teacherListCard.style.display='none';
+      }
+    }
+
+    btnLogin.addEventListener('click', ()=>{
+      const pw = document.getElementById('teacher-password').value;
+      if(pw === defaultPass){
+        setLoggedIn(true);
+        alert('ورود موفق! اکنون می‌توانید نمرات را ثبت یا ویرایش کنید.');
+      } else {
+        alert('رمز اشتباه است.');
+      }
+    });
+    btnLogout.addEventListener('click', ()=>{ setLoggedIn(false); });
+
+    // form controls
+    const inputNid = document.getElementById('input-nid');
+    const inputName = document.getElementById('input-name');
+    const inputScore = document.getElementById('input-score');
+    const inputComment = document.getElementById('input-comment');
+    const btnSave = document.getElementById('btn-save');
+    const btnClear = document.getElementById('btn-clear');
+
+    btnClear.addEventListener('click', ()=>{
+      inputNid.value='';inputName.value='';inputScore.value='';inputComment.value='';
+    });
+
+    function renderTable(){
+      const tbody = document.querySelector('#grade-table tbody');
+      tbody.innerHTML='';
+      const records = loadRecords();
+      if(records.length===0){
+        tbody.innerHTML = '<tr><td colspan="5" class="small">هنوز رکوردی ثبت نشده است</td></tr>';
+        return;
+      }
+      records.forEach((r, idx)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${r.nationalId}</td><td>${r.name||''}</td><td>${r.score}</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis">${r.comment||''}</td>
+                        <td><button class='btn ghost' data-idx='${idx}'>ویرایش</button> <button class='btn' data-delete='${idx}'>حذف</button></td>`;
+        tbody.appendChild(tr);
+      });
+
+      // attach handlers
+      tbody.querySelectorAll('[data-idx]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const i = +btn.getAttribute('data-idx');
+          const rec = loadRecords()[i];
+          inputNid.value = rec.nationalId;
+          inputName.value = rec.name;
+          inputScore.value = rec.score;
+          inputComment.value = rec.comment;
+          // when saving it'll overwrite the existing one with same nationalId
+        });
+      });
+      tbody.querySelectorAll('[data-delete]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const i = +btn.getAttribute('data-delete');
+          if(!confirm('آیا از حذف این رکورد مطمئن هستید؟')) return;
+          const arr = loadRecords(); arr.splice(i,1); saveRecords(arr); renderTable();
+        });
+      });
+    }
+
+    btnSave.addEventListener('click', ()=>{
+      const nid = inputNid.value.trim();
+      const name = inputName.value.trim();
+      const scoreRaw = inputScore.value;
+      const comment = inputComment.value.trim();
+
+      if(!nid || !scoreRaw){ alert('لطفاً کد ملی و نمره را وارد کنید.'); return; }
+      if(!validateIranNationalCode(nid)){
+        if(!confirm('کد ملی معتبر به نظر نمی‌رسد. می‌خواهید با همین مقدار ثبت شود؟')) return;
+      }
+      const score = Number(scoreRaw);
+      if(isNaN(score) || score < 0 || score > 20){ alert('نمره باید بین 0 تا 20 باشد.'); return; }
+
+      const arr = loadRecords();
+      // if same nationalId exists, replace it
+      const existIdx = arr.findIndex(x=>x.nationalId === nid);
+      const now = new Date().toISOString();
+      const newRec = { nationalId: nid, name, score, comment, updated: now };
+      if(existIdx >= 0){ arr[existIdx] = newRec; }
+      else { arr.push(newRec); }
+      saveRecords(arr);
+      renderTable();
+      alert('رکورد با موفقیت ذخیره شد.');
+      btnClear.click();
+    });
+
+    // student actions
+    const btnCheck = document.getElementById('btn-check');
+    const studentNid = document.getElementById('student-nid');
+    const studentResult = document.getElementById('student-result');
+    const studentNone = document.getElementById('student-none');
+
+    function showStudentResult(rec){
+      if(!rec){ studentResult.style.display='none'; studentNone.style.display='block'; return; }
+      studentNone.style.display='none';
+      studentResult.style.display='block';
+      document.getElementById('res-name').textContent = rec.name || '-';
+      document.getElementById('res-nid').textContent = rec.nationalId;
+      document.getElementById('res-score').textContent = rec.score;
+      document.getElementById('res-comment').textContent = rec.comment || '-';
+    }
+
+    btnCheck.addEventListener('click', ()=>{
+      const nid = studentNid.value.trim();
+      if(!nid){ alert('لطفاً کد ملی را وارد کنید.'); return; }
+      const arr = loadRecords();
+      const rec = arr.find(x=>x.nationalId === nid);
+      showStudentResult(rec || null);
+    });
+
+    document.getElementById('btn-clear-student').addEventListener('click', ()=>{
+      studentNid.value=''; studentResult.style.display='none'; studentNone.style.display='none';
+    });
+
+    // initial
+    showTeacher();
+    setLoggedIn(false);
+  </script>
+</body>
+</html>
